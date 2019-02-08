@@ -19,6 +19,7 @@ public class Task {
     private LocalDateTime finishDate;
 
     public Task() {
+        this.setStartDate(LocalDateTime.now());
     }
 
     public Task(String name) {
@@ -29,6 +30,11 @@ public class Task {
         this.setName(name);
         this.setStartDate(startDate);
         this.setFinishDate(finishDate);
+    }
+
+
+    public void updateSlug() {
+        this.slug = SlugUtil.slugify(this.name);
     }
 
     public String getId() {
@@ -45,7 +51,7 @@ public class Task {
 
     public void setName(String name) {
         this.name = name;
-        this.slug = SlugUtil.slugify(name);
+        updateSlug();
     }
 
     public String getSlug() {

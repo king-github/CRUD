@@ -1,6 +1,8 @@
 package com.example.restdemo.controller;
 
 import com.example.restdemo.entity.Task;
+import com.example.restdemo.exception.ResourceNotFoundException;
+import com.example.restdemo.util.SlugUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,7 +15,10 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TaskControllerTest {
@@ -48,21 +53,61 @@ public class TaskControllerTest {
 
         List<Task> result = taskController.taskList();
 
-        assertEquals(result, tasks);
+        assertEquals(tasks, result);
 
     }
 
     @Test
-    public void given_slug_when_getTask_then_taskWithSlug() {
+    public void given_id_when_getTask_then_taskWithId() {
 
-        final String SLUG1 = "task-1";
+        final String ID1 = "id01";
 
-        when(taskRepositoryMock.findBySlug(SLUG1)).thenReturn(Optional.of(task1));
+        when(taskRepositoryMock.findById(ID1)).thenReturn(Optional.of(task1));
 
-        Task result = taskController.getTask("task-1");
+        Task result = taskController.getTask("id01");
 
-        assertEquals(result, task1);
+        assertEquals(task1, result);
 
+    }
+
+    @Test(expected = ResourceNotFoundException.class)
+    public void given_noExistedSlug_when_getTask_then_throwException() {
+
+        when(taskRepositoryMock.findById(any())).thenReturn(Optional.empty());
+
+        Task result = taskController.getTask("no-existed-task");
+    }
+
+    @Test
+    public void given_newTask_when_saveTask_then_save() {
+
+        when(taskRepositoryMock.save(task1)).thenReturn(task1);
+
+        Task result = taskController.saveTask(task1);
+        verify(taskRepositoryMock, times(1)).save(task1);
+        assertEquals(task1, result);
+    }
+
+
+    @Test
+    public void given_task_when_updateTask_then_save() {
+
+        task1.setSlug("---");
+        when(taskRepositoryMock.save(task1)).thenReturn(task1);
+        when(taskRepositoryMock.findById(task1.getId())).thenReturn(Optional.of(task1));
+
+        Task result = taskController.updateTask(task1);
+
+        verify(taskRepositoryMock, times(1)).save(task1);
+        assertEquals(task1, result);
+        assertEquals(task1.getSlug(), SlugUtil.slugify(task1.getName()));
+    }
+
+    @Test
+    public void given_taskId_when_deleteTask_then_deleteTaskWithId() {
+
+        taskController.deleteTask("id1");
+        verify(taskRepositoryMock, times(1)).deleteById("id1");
     }
 
 }
