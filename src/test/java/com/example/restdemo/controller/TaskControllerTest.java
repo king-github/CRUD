@@ -2,6 +2,7 @@ package com.example.restdemo.controller;
 
 import com.example.restdemo.entity.Task;
 import com.example.restdemo.exception.ResourceNotFoundException;
+import com.example.restdemo.locator.ResourceLocator;
 import com.example.restdemo.util.SlugUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,21 +11,27 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 @RunWith(MockitoJUnitRunner.class)
+
 public class TaskControllerTest {
 
     @Mock
     private TaskRepository taskRepositoryMock;
+
+    @Mock
+    private ResourceLocator taskLocatorMock;
 
     private TaskController taskController;
 
@@ -44,6 +51,7 @@ public class TaskControllerTest {
 
         taskController = new TaskController();
         ReflectionTestUtils.setField(taskController, "taskRepository", taskRepositoryMock);
+        ReflectionTestUtils.setField(taskController, "taskLocator", taskLocatorMock);
     }
 
     @Test
@@ -79,13 +87,17 @@ public class TaskControllerTest {
     }
 
     @Test
-    public void given_newTask_when_saveTask_then_save() {
+    public void given_newTask_when_saveTask_then_save() throws URISyntaxException {
+
+        String LOCATION = "http://9999/localhost/api/task/id123";
 
         when(taskRepositoryMock.save(task1)).thenReturn(task1);
+        when(taskLocatorMock.getLocator(any())).thenReturn(new URI(LOCATION));
 
-        Task result = taskController.saveTask(task1);
+        URI location = taskController.saveTask(task1).getHeaders().getLocation();
+
         verify(taskRepositoryMock, times(1)).save(task1);
-        assertEquals(task1, result);
+        assertEquals(LOCATION, location.toString());
     }
 
 

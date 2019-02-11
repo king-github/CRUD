@@ -2,10 +2,17 @@ package com.example.restdemo.controller;
 
 import com.example.restdemo.entity.Task;
 import com.example.restdemo.exception.ResourceNotFoundException;
+import com.example.restdemo.locator.ResourceLocator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
+
 
 @RestController
 @RequestMapping("api/task")
@@ -15,6 +22,10 @@ public class TaskController {
 
     @Autowired
     private TaskRepository taskRepository;
+
+    @Autowired
+
+    private ResourceLocator taskLocator;
 
     @GetMapping
     public List<Task> taskList() {
@@ -30,11 +41,15 @@ public class TaskController {
     }
 
     @PostMapping
-    public Task saveTask(@RequestBody Task task) {
+    //@ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity saveTask(@RequestBody Task task) {
 
         Task saved = taskRepository.save(task);
 
-        return saved;
+        final HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setLocation(taskLocator.getLocator(saved.getId()));
+
+        return new ResponseEntity(httpHeaders, HttpStatus.CREATED);
     }
 
     @PutMapping
@@ -53,4 +68,11 @@ public class TaskController {
 
         taskRepository.deleteById(id);
     }
+
+//    public URI getTaskLocator(Task task) {
+//
+//        return MvcUriComponentsBuilder.fromMethodCall(
+//               MvcUriComponentsBuilder.on(TaskController.class).getTask(task.getId()))
+//               .buildAndExpand().toUri();
+//    }
 }
