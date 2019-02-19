@@ -1,4 +1,4 @@
-package com.example.restdemo.controller;
+package com.example.restdemo.repository;
 
 import com.example.restdemo.entity.Task;
 import org.springframework.data.mongodb.repository.MongoRepository;

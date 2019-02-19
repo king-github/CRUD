@@ -1,6 +1,7 @@
 package com.example.restdemo.controller;
 
 import com.example.restdemo.entity.Task;
+import com.example.restdemo.repository.TaskRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,9 +52,9 @@ public class HttpRequestTest {
 
         ResponseEntity<List<Task>> responseEntity = this.restTemplate
                 .exchange("http://localhost:" + port + "/api/task",
-                HttpMethod.GET,
+                            HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<Task>>() {});
+                            new ParameterizedTypeReference<List<Task>>() {});
 
         List<Task> actual = responseEntity.getBody();
 
@@ -136,7 +137,12 @@ public class HttpRequestTest {
 
         String taskId = allTasks.get(1).getId();
 
-        ResponseEntity<String> responseEntity = this.restTemplate.exchange("http://localhost:" + port + "/api/task/{taskId}", HttpMethod.DELETE, null, String.class, taskId);
+        ResponseEntity<String> responseEntity =
+                this.restTemplate.exchange("http://localhost:" + port + "/api/task/{taskId}",
+                                        HttpMethod.DELETE,
+                            null,
+                                        String.class,
+                                        taskId);
 
         assertThat(responseEntity.getStatusCode(), equalTo(HttpStatus.OK));
     }

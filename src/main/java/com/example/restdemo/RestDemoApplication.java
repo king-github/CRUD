@@ -1,7 +1,8 @@
 package com.example.restdemo;
 
-import com.example.restdemo.controller.TaskRepository;
+
 import com.example.restdemo.entity.Task;
+import com.example.restdemo.repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;

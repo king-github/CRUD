@@ -3,6 +3,7 @@ package com.example.restdemo.controller;
 import com.example.restdemo.entity.Task;
 import com.example.restdemo.exception.ResourceNotFoundException;
 import com.example.restdemo.locator.ResourceLocator;
+import com.example.restdemo.repository.TaskRepository;
 import com.example.restdemo.util.SlugUtil;
 import org.junit.Before;
 import org.junit.Test;
