@@ -10,6 +10,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.net.URI;
@@ -56,13 +59,16 @@ public class TaskControllerTest {
     }
 
     @Test
-    public void when_taskList_then_allTasks() {
+    public void given_pager_when_taskList_then_pageOfTasks() {
 
-        when(taskRepositoryMock.findAll()).thenReturn(tasks);
+        PageRequest pageRequest = PageRequest.of(2, 5);
+        Page<Task> page = new PageImpl(tasks);
 
-        List<Task> result = taskController.taskList();
+        when(taskRepositoryMock.findAll(pageRequest)).thenReturn(page);
 
-        assertEquals(tasks, result);
+        Page<Task> result = taskController.taskList(pageRequest);
+
+        assertEquals(this.tasks, result.getContent());
 
     }
 

@@ -5,12 +5,13 @@ import com.example.restdemo.exception.ResourceNotFoundException;
 import com.example.restdemo.locator.ResourceLocator;
 import com.example.restdemo.repository.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 
 @RestController
@@ -18,6 +19,8 @@ import java.util.List;
 public class TaskController {
 
     final static ResourceNotFoundException TASK_NOT_FOUND_EXCEPTION = new ResourceNotFoundException("Task not Found");
+
+    private static final int TASKS_PER_PAGE = 10;
 
     @Autowired
     private TaskRepository taskRepository;
@@ -27,9 +30,9 @@ public class TaskController {
     private ResourceLocator taskLocator;
 
     @GetMapping
-    public List<Task> taskList() {
+    public Page<Task> taskList(@PageableDefault(size = TASKS_PER_PAGE) Pageable pageable) {
 
-        return taskRepository.findAll();
+        return taskRepository.findAll(pageable);
     }
 
     @GetMapping("/{id}")
@@ -68,10 +71,4 @@ public class TaskController {
         taskRepository.deleteById(id);
     }
 
-//    public URI getTaskLocator(Task task) {
-//
-//        return MvcUriComponentsBuilder.fromMethodCall(
-//               MvcUriComponentsBuilder.on(TaskController.class).getTask(task.getId()))
-//               .buildAndExpand().toUri();
-//    }
 }

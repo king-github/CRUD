@@ -1,6 +1,7 @@
 package com.example.restdemo.controller;
 
 import com.example.restdemo.entity.Task;
+import com.example.restdemo.helper.CustomPageImpl;
 import com.example.restdemo.repository.TaskRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -71,31 +73,34 @@ public class TaskWithMockMvcTest {
     @Test
     public void shouldReturnListOfTasks() throws Exception {
 
-        when(taskRepository.findAll()).thenReturn(allTasks);
+        Page<Task> page = new CustomPageImpl<>(allTasks);
+        PageRequest pageRequest = PageRequest.of(0, 20, Sort.by("name").descending());
+
+        when(taskRepository.findAll(ArgumentMatchers.any(Pageable.class))).thenReturn(page);
 
         this.mockMvc.perform(get("/api/task"))
                 .andDo(print())
                 .andExpect(status().isOk())
 
-                .andExpect(jsonPath("$", hasSize(3)))
+                .andExpect(jsonPath("$.content", hasSize(3)))
 
-                .andExpect(jsonPath("$[0].id", is(task1.getId())))
-                .andExpect(jsonPath("$[0].name", is(task1.getName())))
-                .andExpect(jsonPath("$[0].slug", is(task1.getSlug())))
-                .andExpect(jsonPath("$[0].startDate", is(task1.getStartDate().toString())))
-                .andExpect(jsonPath("$[0].finishDate", is(task1.getFinishDate().toString())))
+                .andExpect(jsonPath("$.content[0].id", is(task1.getId())))
+                .andExpect(jsonPath("$.content[0].name", is(task1.getName())))
+                .andExpect(jsonPath("$.content[0].slug", is(task1.getSlug())))
+                .andExpect(jsonPath("$.content[0].startDate", is(task1.getStartDate().toString())))
+                .andExpect(jsonPath("$.content[0].finishDate", is(task1.getFinishDate().toString())))
 
-                .andExpect(jsonPath("$[1].id", is(task2.getId())))
-                .andExpect(jsonPath("$[1].name", is(task2.getName())))
-                .andExpect(jsonPath("$[1].slug", is(task2.getSlug())))
-                .andExpect(jsonPath("$[1].startDate", is(task2.getStartDate().toString())))
-                .andExpect(jsonPath("$[1].finishDate", is(task2.getFinishDate().toString())))
+                .andExpect(jsonPath("$.content[1].id", is(task2.getId())))
+                .andExpect(jsonPath("$.content[1].name", is(task2.getName())))
+                .andExpect(jsonPath("$.content[1].slug", is(task2.getSlug())))
+                .andExpect(jsonPath("$.content[1].startDate", is(task2.getStartDate().toString())))
+                .andExpect(jsonPath("$.content[1].finishDate", is(task2.getFinishDate().toString())))
 
-                .andExpect(jsonPath("$[2].id", is(task3.getId())))
-                .andExpect(jsonPath("$[2].name", is(task3.getName())))
-                .andExpect(jsonPath("$[2].slug", is(task3.getSlug())))
-                .andExpect(jsonPath("$[2].startDate", is(task3.getStartDate().toString())))
-                .andExpect(jsonPath("$[2].finishDate", is(task3.getFinishDate().toString())))
+                .andExpect(jsonPath("$.content[2].id", is(task3.getId())))
+                .andExpect(jsonPath("$.content[2].name", is(task3.getName())))
+                .andExpect(jsonPath("$.content[2].slug", is(task3.getSlug())))
+                .andExpect(jsonPath("$.content[2].startDate", is(task3.getStartDate().toString())))
+                .andExpect(jsonPath("$.content[2].finishDate", is(task3.getFinishDate().toString())))
         ;
     }
 

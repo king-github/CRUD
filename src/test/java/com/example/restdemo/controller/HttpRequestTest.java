@@ -1,6 +1,7 @@
 package com.example.restdemo.controller;
 
 import com.example.restdemo.entity.Task;
+import com.example.restdemo.helper.CustomPageImpl;
 import com.example.restdemo.repository.TaskRepository;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -50,16 +52,17 @@ public class HttpRequestTest {
     @Test
     public void shouldReturnAllTasks() {
 
-        ResponseEntity<List<Task>> responseEntity = this.restTemplate
+        ResponseEntity<CustomPageImpl<Task>> responseEntity = this.restTemplate
                 .exchange("http://localhost:" + port + "/api/task",
                             HttpMethod.GET,
                 null,
-                            new ParameterizedTypeReference<List<Task>>() {});
+                            new ParameterizedTypeReference<CustomPageImpl<Task>>() {});
 
-        List<Task> actual = responseEntity.getBody();
+        Page<Task> actual = responseEntity.getBody();
 
         assertThat(responseEntity.getStatusCode(), equalTo(HttpStatus.OK));
-        assertEquals(actual.size(), allTasks.size());
+        assertEquals(allTasks.size(), actual.getContent().size());
+        assertEquals(1, actual.getTotalPages());
     }
 
     @Test
