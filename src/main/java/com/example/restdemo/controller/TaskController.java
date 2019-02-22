@@ -1,5 +1,6 @@
 package com.example.restdemo.controller;
 
+import com.example.restdemo.dto.SearchTaskDto;
 import com.example.restdemo.entity.Task;
 import com.example.restdemo.exception.ResourceNotFoundException;
 import com.example.restdemo.locator.ResourceLocator;
@@ -40,6 +41,14 @@ public class TaskController {
 
         return taskRepository.findById(id)
                 .orElseThrow(() -> TASK_NOT_FOUND_EXCEPTION);
+    }
+
+    @PostMapping("search")
+    public Page<Task> searchTask(@PageableDefault(size = TASKS_PER_PAGE) Pageable pageable,
+                                 @RequestBody SearchTaskDto searchTaskDto) {
+
+        return taskRepository.getFilteredTasks(searchTaskDto, pageable);
+
     }
 
     @PostMapping

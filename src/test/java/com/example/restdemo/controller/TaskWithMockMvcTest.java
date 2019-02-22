@@ -1,5 +1,6 @@
 package com.example.restdemo.controller;
 
+import com.example.restdemo.dto.SearchTaskDto;
 import com.example.restdemo.entity.Task;
 import com.example.restdemo.helper.CustomPageImpl;
 import com.example.restdemo.repository.TaskRepository;
@@ -43,31 +44,37 @@ public class TaskWithMockMvcTest {
     @Autowired
     private ObjectMapper jacksonObjectMapper;
 
-    private LocalDateTime dateTime1;
-    private LocalDateTime dateTime2;
+    private LocalDateTime dateTime;
 
     private Task task1;
     private Task task2;
     private Task task3;
+    private Task task4;
+    private Task task5;
 
     private List<Task> allTasks;
 
     @Before
     public void setUp(){
 
-        dateTime1 = LocalDateTime.parse("2019-01-12T12:25:17.123");
-        dateTime2 = dateTime1.plusDays(2);
+        dateTime = LocalDateTime.parse("2019-01-12T12:25:17.123");
 
-        task1 = new Task("Task1", dateTime1, dateTime2);
+        task1 = new Task("Task1", dateTime.plusDays(0), dateTime.plusDays(10));
         task1.setId("id001");
 
-        task2 = new Task("Task number two", dateTime1, dateTime2);
+        task2 = new Task("Task number two", dateTime.plusDays(1), dateTime.plusDays(11));
         task2.setId("id002");
 
-        task3 = new Task("Task number three.", dateTime1, dateTime2);
+        task3 = new Task("Task number three.", dateTime.plusDays(2), dateTime.plusDays(12));
         task3.setId("id003");
 
-        allTasks = Arrays.asList(task1, task2, task3);
+        task4 = new Task("Task number four.", dateTime.plusDays(3), dateTime.plusDays(13));
+        task4.setId("id004");
+
+        task5 = new Task("Task number five.", dateTime.plusDays(4), dateTime.plusDays(14));
+        task5.setId("id005");
+
+        allTasks = Arrays.asList(task1, task2, task3, task4, task5);
     }
 
     @Test
@@ -82,7 +89,7 @@ public class TaskWithMockMvcTest {
                 .andDo(print())
                 .andExpect(status().isOk())
 
-                .andExpect(jsonPath("$.content", hasSize(3)))
+                .andExpect(jsonPath("$.content", hasSize(allTasks.size())))
 
                 .andExpect(jsonPath("$.content[0].id", is(task1.getId())))
                 .andExpect(jsonPath("$.content[0].name", is(task1.getName())))
@@ -97,10 +104,15 @@ public class TaskWithMockMvcTest {
                 .andExpect(jsonPath("$.content[1].finishDate", is(task2.getFinishDate().toString())))
 
                 .andExpect(jsonPath("$.content[2].id", is(task3.getId())))
-                .andExpect(jsonPath("$.content[2].name", is(task3.getName())))
-                .andExpect(jsonPath("$.content[2].slug", is(task3.getSlug())))
-                .andExpect(jsonPath("$.content[2].startDate", is(task3.getStartDate().toString())))
-                .andExpect(jsonPath("$.content[2].finishDate", is(task3.getFinishDate().toString())))
+                // ... skip
+                .andExpect(jsonPath("$.content[3].id", is(task4.getId())))
+                // ... skip
+
+                .andExpect(jsonPath("$.content[4].id", is(task5.getId())))
+                .andExpect(jsonPath("$.content[4].name", is(task5.getName())))
+                .andExpect(jsonPath("$.content[4].slug", is(task5.getSlug())))
+                .andExpect(jsonPath("$.content[4].startDate", is(task5.getStartDate().toString())))
+                .andExpect(jsonPath("$.content[4].finishDate", is(task5.getFinishDate().toString())))
         ;
     }
 
@@ -132,6 +144,41 @@ public class TaskWithMockMvcTest {
     }
 
     @Test
+    public void shouldReturnFilteredTaskPage() throws Exception {
+
+        SearchTaskDto searchTaskDto = new SearchTaskDto(
+                                "task",
+                                dateTime.plusDays(2),
+                                dateTime.plusDays(4),
+                                dateTime.plusDays(12),
+                                dateTime.plusDays(14)
+                );
+
+        Page<Task> page = new CustomPageImpl<>(allTasks);
+        PageRequest pageRequest = PageRequest.of(0, 20, Sort.by("name").descending());
+
+        when(taskRepository.getFilteredTasks(ArgumentMatchers.any(SearchTaskDto.class),
+                                             ArgumentMatchers.any(Pageable.class)))
+                                        .thenReturn(page);
+
+        String searchTaskDtoJson = jacksonObjectMapper.writeValueAsString(searchTaskDto);
+
+        this.mockMvc.perform(post("/api/task/search")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(searchTaskDtoJson)
+                .accept(MediaType.APPLICATION_JSON_VALUE)
+        )
+                .andDo(print())
+                .andExpect(status().isOk())
+
+                .andExpect(jsonPath("$.content", hasSize(allTasks.size())))
+        ;
+
+    }
+
+
+
+    @Test
     public void shouldAddNewTaskReturn201AndLocation() throws Exception {
 
         Task newTask = new Task("New task");
@@ -157,8 +204,8 @@ public class TaskWithMockMvcTest {
 
         Task updated = new Task("Updated task");
         updated.setId(task2.getId());
-        updated.setStartDate(dateTime2);
-        updated.setFinishDate(dateTime1);
+        updated.setStartDate(dateTime.plusDays(2));
+        updated.setFinishDate(dateTime.plusDays(4));
 
         String taskJson = jacksonObjectMapper.writeValueAsString(updated);
 
