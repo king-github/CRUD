@@ -3,8 +3,7 @@ package com.example.restdemo.controller;
 import com.example.restdemo.entity.Task;
 import com.example.restdemo.exception.ResourceNotFoundException;
 import com.example.restdemo.locator.ResourceLocator;
-import com.example.restdemo.repository.TaskRepository;
-import com.example.restdemo.util.SlugUtil;
+import com.example.restdemo.service.TaskService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,7 +31,10 @@ import static org.mockito.internal.verification.VerificationModeFactory.times;
 public class TaskControllerTest {
 
     @Mock
-    private TaskRepository taskRepositoryMock;
+    private TaskService taskServiceMock;
+
+    @Mock
+    private ResourceNotFoundException taskNotFoundExceptionMock;
 
     @Mock
     private ResourceLocator taskLocatorMock;
@@ -54,7 +56,9 @@ public class TaskControllerTest {
         tasks.add(new Task("task 3"));
 
         taskController = new TaskController();
-        ReflectionTestUtils.setField(taskController, "taskRepository", taskRepositoryMock);
+
+        ReflectionTestUtils.setField(taskController, "taskService", taskServiceMock);
+        ReflectionTestUtils.setField(taskController, "taskNotFoundException", taskNotFoundExceptionMock);
         ReflectionTestUtils.setField(taskController, "taskLocator", taskLocatorMock);
     }
 
@@ -64,7 +68,7 @@ public class TaskControllerTest {
         PageRequest pageRequest = PageRequest.of(2, 5);
         Page<Task> page = new PageImpl(tasks);
 
-        when(taskRepositoryMock.findAll(pageRequest)).thenReturn(page);
+        when(taskServiceMock.getAllTasks(pageRequest)).thenReturn(page);
 
         Page<Task> result = taskController.taskList(pageRequest);
 
@@ -77,7 +81,7 @@ public class TaskControllerTest {
 
         final String ID1 = "id01";
 
-        when(taskRepositoryMock.findById(ID1)).thenReturn(Optional.of(task1));
+        when(taskServiceMock.getTaskById(ID1)).thenReturn(Optional.of(task1));
 
         Task result = taskController.getTask("id01");
 
@@ -86,9 +90,9 @@ public class TaskControllerTest {
     }
 
     @Test(expected = ResourceNotFoundException.class)
-    public void given_noExistedSlug_when_getTask_then_throwException() {
+    public void given_noExistedId_when_getTask_then_throwException() {
 
-        when(taskRepositoryMock.findById(any())).thenReturn(Optional.empty());
+        when(taskServiceMock.getTaskById(any())).thenReturn(Optional.empty());
 
         Task result = taskController.getTask("no-existed-task");
     }
@@ -98,12 +102,12 @@ public class TaskControllerTest {
 
         String LOCATION = "http://9999/localhost/api/task/id123";
 
-        when(taskRepositoryMock.save(task1)).thenReturn(task1);
+        when(taskServiceMock.save(task1)).thenReturn(task1);
         when(taskLocatorMock.getLocator(any())).thenReturn(new URI(LOCATION));
 
         URI location = taskController.saveTask(task1).getHeaders().getLocation();
 
-        verify(taskRepositoryMock, times(1)).save(task1);
+        verify(taskServiceMock, times(1)).save(task1);
         assertEquals(LOCATION, location.toString());
     }
 
@@ -112,21 +116,19 @@ public class TaskControllerTest {
     public void given_task_when_updateTask_then_save() {
 
         task1.setSlug("---");
-        when(taskRepositoryMock.save(task1)).thenReturn(task1);
-        when(taskRepositoryMock.findById(task1.getId())).thenReturn(Optional.of(task1));
+        when(taskServiceMock.updateTask(task1)).thenReturn(task1);
 
         Task result = taskController.updateTask(task1);
 
-        verify(taskRepositoryMock, times(1)).save(task1);
+        verify(taskServiceMock, times(1)).updateTask(task1);
         assertEquals(task1, result);
-        assertEquals(task1.getSlug(), SlugUtil.slugify(task1.getName()));
     }
 
     @Test
     public void given_taskId_when_deleteTask_then_deleteTaskWithId() {
 
         taskController.deleteTask("id1");
-        verify(taskRepositoryMock, times(1)).deleteById("id1");
+        verify(taskServiceMock, times(1)).delete("id1");
     }
 
 }

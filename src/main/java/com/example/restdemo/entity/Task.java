@@ -1,6 +1,5 @@
 package com.example.restdemo.entity;
 
-import com.example.restdemo.util.SlugUtil;
 import org.springframework.data.annotation.Id;
 
 import java.time.LocalDateTime;
@@ -34,11 +33,6 @@ public class Task {
         this.setFinishDate(finishDate);
     }
 
-
-    public void updateSlug() {
-        this.slug = SlugUtil.slugify(this.name);
-    }
-
     public String getId() {
         return id;
     }
@@ -53,7 +47,6 @@ public class Task {
 
     public void setName(String name) {
         this.name = name;
-        updateSlug();
     }
 
     public String getSlug() {

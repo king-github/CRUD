@@ -4,8 +4,9 @@ import com.example.restdemo.dto.SearchTaskDto;
 import com.example.restdemo.entity.Task;
 import com.example.restdemo.exception.ResourceNotFoundException;
 import com.example.restdemo.locator.ResourceLocator;
-import com.example.restdemo.repository.TaskRepository;
+import com.example.restdemo.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -19,12 +20,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("api/task")
 public class TaskController {
 
-    final static ResourceNotFoundException TASK_NOT_FOUND_EXCEPTION = new ResourceNotFoundException("Task not Found");
+    @Autowired
+    @Qualifier("taskNotFoundException")
+    private ResourceNotFoundException taskNotFoundException;
 
     private static final int TASKS_PER_PAGE = 10;
 
     @Autowired
-    private TaskRepository taskRepository;
+    private TaskService taskService;
 
     @Autowired
 
@@ -33,21 +36,21 @@ public class TaskController {
     @GetMapping
     public Page<Task> taskList(@PageableDefault(size = TASKS_PER_PAGE) Pageable pageable) {
 
-        return taskRepository.findAll(pageable);
+        return taskService.getAllTasks(pageable);
     }
 
     @GetMapping("/{id}")
     public Task getTask(@PathVariable("id") String id) {
 
-        return taskRepository.findById(id)
-                .orElseThrow(() -> TASK_NOT_FOUND_EXCEPTION);
+        return taskService.getTaskById(id)
+                .orElseThrow(() -> taskNotFoundException);
     }
 
     @PostMapping("search")
     public Page<Task> searchTask(@PageableDefault(size = TASKS_PER_PAGE) Pageable pageable,
                                  @RequestBody SearchTaskDto searchTaskDto) {
 
-        return taskRepository.getFilteredTasks(searchTaskDto, pageable);
+        return taskService.getFiletredTasks(searchTaskDto, pageable);
 
     }
 
@@ -55,7 +58,7 @@ public class TaskController {
     //@ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity saveTask(@RequestBody Task task) {
 
-        Task saved = taskRepository.save(task);
+        Task saved = taskService.save(task);
 
         final HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setLocation(taskLocator.getLocator(saved.getId()));
@@ -66,18 +69,13 @@ public class TaskController {
     @PutMapping
     public Task updateTask(@RequestBody Task updatedTask) {
 
-        Task found = taskRepository.findById(updatedTask.getId())
-                .orElseThrow(() -> TASK_NOT_FOUND_EXCEPTION);
-        updatedTask.updateSlug();
-        Task saved = taskRepository.save(updatedTask);
-
-        return saved;
+        return taskService.updateTask(updatedTask);
     }
 
     @DeleteMapping("/{id}")
     public void deleteTask(@PathVariable("id") String id) {
 
-        taskRepository.deleteById(id);
+        taskService.delete(id);
     }
 
 }

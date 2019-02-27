@@ -3,7 +3,7 @@ package com.example.restdemo.controller;
 import com.example.restdemo.dto.SearchTaskDto;
 import com.example.restdemo.entity.Task;
 import com.example.restdemo.helper.CustomPageImpl;
-import com.example.restdemo.repository.TaskRepository;
+import com.example.restdemo.service.TaskService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,7 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -39,7 +42,8 @@ public class TaskWithMockMvcTest {
     private MockMvc mockMvc;
 
     @MockBean
-    private TaskRepository taskRepository;
+    private TaskService taskService;
+
 
     @Autowired
     private ObjectMapper jacksonObjectMapper;
@@ -83,7 +87,7 @@ public class TaskWithMockMvcTest {
         Page<Task> page = new CustomPageImpl<>(allTasks);
         PageRequest pageRequest = PageRequest.of(0, 20, Sort.by("name").descending());
 
-        when(taskRepository.findAll(ArgumentMatchers.any(Pageable.class))).thenReturn(page);
+        when(taskService.getAllTasks(ArgumentMatchers.any(Pageable.class))).thenReturn(page);
 
         this.mockMvc.perform(get("/api/task"))
                 .andDo(print())
@@ -119,7 +123,7 @@ public class TaskWithMockMvcTest {
     @Test
     public void shouldReturnTaskWithId() throws Exception {
 
-        when(taskRepository.findById(task2.getId())).thenReturn(Optional.of(task2));
+        when(taskService.getTaskById(task2.getId())).thenReturn(Optional.of(task2));
 
         this.mockMvc.perform(get("/api/task/" +task2.getId()))
                 .andDo(print())
@@ -136,7 +140,7 @@ public class TaskWithMockMvcTest {
     @Test
     public void shouldReturnNotFound() throws Exception {
 
-        when(taskRepository.findById(anyString())).thenReturn(Optional.empty());
+        when(taskService.getTaskById(anyString())).thenReturn(Optional.empty());
 
         this.mockMvc.perform(get("/api/task/" + "NoExistedId")).andDo(print())
                 .andExpect(status().isNotFound())
@@ -157,8 +161,8 @@ public class TaskWithMockMvcTest {
         Page<Task> page = new CustomPageImpl<>(allTasks);
         PageRequest pageRequest = PageRequest.of(0, 20, Sort.by("name").descending());
 
-        when(taskRepository.getFilteredTasks(ArgumentMatchers.any(SearchTaskDto.class),
-                                             ArgumentMatchers.any(Pageable.class)))
+        when(taskService.getFiletredTasks(ArgumentMatchers.any(SearchTaskDto.class),
+                                          ArgumentMatchers.any(Pageable.class)))
                                         .thenReturn(page);
 
         String searchTaskDtoJson = jacksonObjectMapper.writeValueAsString(searchTaskDto);
@@ -186,7 +190,7 @@ public class TaskWithMockMvcTest {
 
         String taskJson = jacksonObjectMapper.writeValueAsString(newTask);
 
-        when(taskRepository.save(ArgumentMatchers.any(Task.class))).thenReturn(newTask);
+        when(taskService.save(ArgumentMatchers.any(Task.class))).thenReturn(newTask);
 
         this.mockMvc.perform(post("/api/task")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -209,8 +213,7 @@ public class TaskWithMockMvcTest {
 
         String taskJson = jacksonObjectMapper.writeValueAsString(updated);
 
-        when(taskRepository.findById(task2.getId())).thenReturn(Optional.of(task2));
-        when(taskRepository.save(ArgumentMatchers.any(Task.class))).thenReturn(updated);
+        when(taskService.updateTask(ArgumentMatchers.any(Task.class))).thenReturn(updated);
 
         this.mockMvc.perform(put("/api/task/")
                         .contentType(MediaType.APPLICATION_JSON)

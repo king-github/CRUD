@@ -131,6 +131,7 @@ public class HttpRequestTest {
 
         Task actual = responseEntity.getBody();
 
+        updatedTask.setSlug("updated-task");
         assertThat(responseEntity.getStatusCode(), equalTo(HttpStatus.OK));
         assertThat(actual, samePropertyValuesAs(updatedTask));
     }
